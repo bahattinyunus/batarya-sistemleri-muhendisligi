@@ -14,6 +14,7 @@ Farklı batarya kimyaları, elektrokimyasal yapıları gereği farklı nominal v
 | **LFP** (Lityum Demir Fosfat) | 3.2 | 2.0 - 3.65 | 90 - 160 | 3,000 - 6,000+ | ~270 °C | Yüksek (1C / 10C) | **(+):** Üstün termal kararlılık, uzun ömür, güvenli.<br>**(-):** Düşük enerji yoğunluğu, düz OCV eğrisi. |
 | **LTO** (Lityum Titanat) | 2.4 | 1.5 - 2.8 | 70 - 110 | 10,000 - 20,000+ | ~300+ °C | Çok Yüksek (10C / 30C) | **(+):** Ultra hızlı şarj, ekstrem ömür, soğukta çalışma.<br>**(-):** Çok düşük enerji yoğunluğu, yüksek maliyet. |
 | **NCA** (Nikel Kobalt Alüminyum) | 3.6 | 2.5 - 4.2 | 200 - 260 | 1,000 - 1,500 | ~150 °C | Orta (1C / 3C) | **(+):** Çok yüksek enerji yoğunluğu.<br>**(-):** En kararsız kimya, yüksek termal kaçak riski. |
+| **Na-Ion** (Sodyum İyon) | 3.0 - 3.1 | 1.5 - 4.1 | 100 - 150 | 2,000 - 4,000+ | ~260 °C | Yüksek (3C / 5C) | **(+):** Çok düşük maliyet, bol hammadde, soğukta üstün performans.<br>**(-):** Lityuma göre daha düşük enerji yoğunluğu, yüksek faz geçiş direnç değişimi. |
 
 ---
 

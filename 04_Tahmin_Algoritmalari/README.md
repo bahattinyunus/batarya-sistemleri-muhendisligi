@@ -86,6 +86,46 @@ SoP, bataryanın anlık olarak güvenli sınırlar (voltaj, akım, sıcaklık) i
 
 ---
 
+## 🧪 5. LFP Kimyasında Düz OCV ve Histerezis Problemi
+
+Lityum Demir Fosfat (LFP) pillerde $OCV(SoC)$ eğrisi, orta aralıkta (%20 - %90 SoC) son derece düz bir plato çizer. Bu platoda türev $\frac{dOCV}{dSoC} \approx 0$ değerine çok yakındır.
+
+### A. Gürültü Hassasiyeti (Noise Sensitivity)
+Hücre voltajı ölçen ADC'ler üzerindeki en ufak bir donanımsal gürültü ($\pm 2\text{ mV}$), EKF Jacobian matrisi $\mathbf{H} = \begin{bmatrix} -1 & \frac{d OCV}{d SoC} \end{bmatrix}$ içerisindeki türevin sıfıra yakın olması nedeniyle durum güncelleme adımında ($\mathbf{K}_k [\mathbf{y}_k - \mathbf{h}(\hat{\mathbf{x}}_k^-)]$) kararsızlıklara ve SoC kestiriminde **%15'e varan büyük hatalara** yol açar.
+
+### B. OCV Histerezis Etkisi
+LFP pillerde gerilim histerezisi (şarj ve deşarj eğrileri arasındaki fark) oldukça belirgindir. Hücrenin en son şarj mı deşarj mı edildiği bilgisi voltajı doğrudan etkiler. Bu etkiyi modellemek için durum vektörüne tekil bir **Histerezis Durumu** ($h$) eklenir:
+
+$$h(k+1) = \exp\left(-\gamma |I(k)| dt\right) h(k) + \left[1 - \exp\left(-\gamma |I(k)| dt\right)\right] \text{sgn}(I(k))$$
+
+Burada $\gamma$ histerezis sönüm katsayısıdır. Bu sayede güncellenmiş hücre gerilim denklemi:
+$$V_t = OCV(SoC) - I R_0 - V_{rc} + M \cdot h(k)$$
+*(M, histerezis genlik katsayısıdır. Bu model sayesinde EKF kararlılığı LFP pillerde de korunur.)*
+
+---
+
+## ☁️ 6. Bulut Tabanlı (Cloud-BMS) Yapay Zekalı Kestirim
+
+Geleneksel batarya yönetim sistemlerinin araç üzerindeki işlem gücü sınırlarını aşmak amacıyla geliştirilen **Cloud-BMS** mimarisi, fiziksel modeller ile yapay zekayı birleştirir.
+
+```
++--------------------+   Telemetri (V, I, T)   +----------------------------+
+|  Araç Üstü Edge    | ----------------------> |    Bulut Tabanlı Dijital   |
+|   (BMS / MCU)      |                         |         İkiz (Cloud)       |
+|                    | <---------------------- | - DFN Elektrokimyasal Model|
+| - 1-RC ECM Modeli  |    OTA Parametreleri    | - LSTM / GRU Yapay Zeka     |
+| - Gerçek Zamanlı   |      (R0, C1, Cap)      | - GPR ile SoH/RUL Analizi   |
+|   Limit Kontrolü   |                         |                            |
++--------------------+                         +----------------------------+
+```
+
+*   **Fiziksel Dijital İkiz (DFN Modeli):** Bulut sunucularında, hücrenin iç lityum iyon konsantrasyonunu ve katı faz difüzyonunu modelleyen kısmi diferansiyel denklemlere dayalı **Doyle-Fuller-Newman (DFN)** elektrokimyasal modeli çözülür.
+*   **AI/ML Tabanlı Tahmin:** Zaman serisi verilerini işleyen **LSTM (Long Short-Term Memory)** ve **GRU (Gated Recurrent Unit)** yapay sinir ağları, hücrelerin voltaj, akım ve sıcaklık profillerinden doğrudan $SoC$ ve $SoH$ tahmini yapar.
+*   **Gaussian Process Regression (GPR):** Olasılıksal bir makine öğrenimi tekniği olan GPR kullanılarak bataryanın kalan ömrü (RUL - Remaining Useful Life) ve yaşlanma trendleri güven aralıklarıyla birlikte (%95 olasılık sınırlarında) hesaplanır ve OTA (Over-The-Air) ile gömülü yazılıma kalibrasyon parametresi olarak iletilir.
+
+---
+
 ## 💻 Uygulama ve Simülasyon
 
 *   [ekf_soc_estimator.py](./ekf_soc_estimator.py): NumPy matris matematiğiyle yazılmış, gerçek voltaj gürültüsünü filtreleyerek SoC'yi hassas bir şekilde takip eden EKF Python simülasyonu.
+

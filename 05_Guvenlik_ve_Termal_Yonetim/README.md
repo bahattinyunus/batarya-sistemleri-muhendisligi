@@ -79,6 +79,52 @@ Burada:
 
 ---
 
+## 🔍 5. Hücre İçi (In-situ) FBG Optik Algılama
+
+Geleneksel batarya termal yönetiminde, sıcaklık hücre dışına yapıştırılan NTC/PTC dirençlerle ölçülür. Bu yöntem, hücre merkezindeki reaksiyonlar ile sensör tepkisi arasında **10 ila 30 saniye** arasında ciddi bir termal gecikmeye yol açar. Bu gecikmeyi önlemek için **Fiber Bragg Grating (FBG)** optik sensörler kullanılır.
+
+### Strain ve Sıcaklık Ayrımı (Decoupling)
+Hücre içine doğrudan gömülen saç teli kalınlığındaki FBG sensörlerinden yansıyan dalga boyu ($\lambda_B$) değişimi şu fiziksel eşitlikle ifade edilir:
+
+$$\frac{\Delta \lambda_B}{\lambda_B} = (1 - p_e) \varepsilon + (\alpha_{\Lambda} + \alpha_n) \Delta T$$
+
+Burada:
+*   $p_e$ fotoelastik katsayı,
+*   $\varepsilon$ elektrotların şişmesinden (electrode swelling) kaynaklanan mekanik uzama (strain),
+*   $\alpha_{\Lambda}$ termal genleşme katsayısı,
+*   $\alpha_n$ termo-optik katsayı,
+*   $\Delta T$ hücre içi lokal sıcaklık değişimidir.
+
+Farklı kaplamalara ve Bragg periyotlarına sahip çift FBG sensörü kullanılarak mekanik gerilim ($\varepsilon$) ve sıcaklık ($\Delta T$) etkileri birbirinden **decouple edilir (ayrıştırılır)**. Bu sayede hücre içindeki gaz salınımı kaynaklı basınç artışları ve lityum birikimi (swelling) anında tespit edilir. Ayrıca optik fiberler cam tabanlı olduğundan yüksek voltaj (HV) parazitlerinden ve elektromanyetik alanlardan (EMI) tamamen yalıtılmış çalışır.
+
+---
+
+## 📈 6. Çevrimiçi (Online) EIS Empedans Spektroskopisi
+
+Elektrokimyasal Empedans Spektroskopisi (EIS), hücre içerisine farklı frekanslarda küçük genlikli AC akım sinyalleri enjekte ederek bataryanın empedans spektrumunu (Nyquist Plot) çıkaran üst seviye bir teşhis aracıdır.
+
+```
+       Im(Z) ^ 
+             |            Orta Frekans (1 Hz - 100 Hz)
+             |                 /---------------\ 
+             |                /                 \
+             |       Ohmik   |   Yük Aktarım    |   Düşük Frekans (<1 Hz)
+             |      Direnç   |   Direnci (R_ct) |     Warburg Difüzyonu
+             |      (R_0)    |  ve Çift Katman  |          /
+             |--------*------|  Kapasitesi (C)  |---------/----------> Re(Z)
+                      |<---->|<---------------->|
+```
+
+### Spektral Analiz ve Hata Tespiti:
+1.  **Yüksek Frekanslar ($>100\text{ Hz}$):** Nyquist eğrisinin reel ekseni kestiği nokta hücrenin saf ohmik iç direncidir ($R_0$).
+2.  **Orta Frekanslar ($1\text{ Hz} - 100\text{ Hz}$):** Yarım daire şeklindeki halkalar anot ve katottaki yük aktarım direncini ($R_{ct}$) ve SEI tabakası empedansını gösterir. Hücre yaşlandıkça veya anotta **Lityum Dendritleri (Lithium Plating)** büyüdükçe bu halkaların çapı dramatik olarak genişler.
+3.  **Düşük Frekanslar ($<1\text{ Hz}$):** Doğrusal yükselen eğri, lityum iyonlarının aktif malzeme içerisindeki difüzyon dinamiklerini (Warburg Empedansı) temsil eder.
+
+Modern otomotiv BMS tasarımlarında, online EIS devreleri yardımıyla araç seyir halindeyken bu spektrum takip edilir. Nyquist halkasının genişlemesi veya tepe frekansının kayması izlenerek hücre içi gazlanma ve kısa devre riskleri **termal kaçak başlamadan milisaniyeler öncesinde** yakalanır.
+
+---
+
 ## 💻 Uygulama ve Simülasyon
 
 *   [thermal_pid_control.py](./thermal_pid_control.py): Hücrelerin Joule ısınması ($I^2 R$) ve entropik ısı üretimini modelleyen, bu ısıyı aktif bir PID kontrolör yardımıyla soğutan yüksek sadakatli Python simülasyonu.
+
