@@ -18,10 +18,10 @@ Aşağıdaki modüller, bir Batarya Sistem Mühendisinin uzmanlaşması gereken 
 
 | Modül | Teknik Odak Alanı | Akademik İçerik | Uygulama & Kod İçeriği |
 | :--- | :--- | :--- | :--- |
-| **[Modül 1](./01_Hucre_Modelleme_ve_Karakterizasyon)** | Hücre Modelleme & Karakterizasyon | LFP, NMC, LTO Karşılaştırmaları, 1-RC (Thevenin) & 2-RC Durum-Uzay Modelleri, OCV-SoC Polinomları | [`cell_model_1RC.py`](./01_Hucre_Modelleme_ve_Karakterizasyon/cell_model_1RC.py): Dynamic Stress Test (DST) ile n-derece OCV hücre simülasyonu. |
-| **[Modül 2](./02_Guc_Elektronigi_ve_Donanim)** | Güç Elektroniği & Donanım Tasarımı | AFE SPI Daisy Chain Haberleşmesi, Şönt vs. Hall Akım Sensörleri Hata Analizi, Pasif & Aktif Balans Hesapları | [`precharge_simulation.py`](./02_Guc_Elektronigi_ve_Donanim/precharge_simulation.py): DC-Link ön şarj geçici durum RC simülasyonu ve inrush akım analizi. |
-| **[Modül 3](./03_BMS_Yazilim_Mimarisi)** | BMS Gömülü Yazılım Mimarisi | AUTOSAR Katmanlı Mimarisi, RTOS Görev (Task) Zamanlamaları, MISRA C++ Güvenli Kodlama Standartları | [`bms_fsm.cpp`](./03_BMS_Yazilim_Mimarisi/bms_fsm.cpp): C++11 standartlarında, DTC loglama ve hata debounce filtreli deterministik FSM. |
-| **[Modül 4](./04_Tahmin_Algoritmalari)** | Kestirim Algoritmaları | Coulomb Counting Drift Analizi, 2D Extended Kalman Filter (EKF) Matematiksel Adımları, RLS ile SoH & SoP | [`ekf_soc_estimator.py`](./04_Tahmin_Algoritmalari/ekf_soc_estimator.py): NumPy matris işlemleri ve Jacobian türevleriyle gürültü filtreleyen EKF SoC takipçisi. |
+| **[Modül 1](./01_Hucre_Modelleme_ve_Karakterizasyon)** | Hücre Modelleme & Karakterizasyon | LFP, NMC, LTO Karşılaştırmaları, 1-RC (Thevenin) & 2-RC Durum-Uzay Modelleri, OCV-SoC Polinomları | [`cell_model_1RC.py`](./01_Hucre_Modelleme_ve_Karakterizasyon/cell_model_1RC.py): Dynamic Stress Test (DST) ile n-derece OCV hücre simülasyonu.<br>[`cell_model_2RC_hysteresis.py`](./01_Hucre_Modelleme_ve_Karakterizasyon/cell_model_2RC_hysteresis.py): 2-RC, LFP düz plato OCV, Plett histerezis, Arrhenius sıcaklık etkisi ve HPPC. |
+| **[Modül 2](./02_Guc_Elektronigi_ve_Donanim)** | Güç Elektroniği & Donanım Tasarımı | AFE SPI Daisy Chain Haberleşmesi, Şönt vs. Hall Akım Sensörleri Hata Analizi, Pasif & Aktif Balans Hesapları | [`precharge_simulation.py`](./02_Guc_Elektronigi_ve_Donanim/precharge_simulation.py): DC-Link ön şarj geçici durum RC simülasyonu ve inrush akım analizi.<br>[`cell_balancing_simulation.py`](./02_Guc_Elektronigi_ve_Donanim/cell_balancing_simulation.py): Pasif vs aktif dengeleme ve ISO 6469-3 IMD izolasyon analizi. |
+| **[Modül 3](./03_BMS_Yazilim_Mimarisi)** | BMS Gömülü Yazılım Mimarisi | AUTOSAR Katmanlı Mimarisi, RTOS Görev (Task) Zamanlamaları, MISRA C++ Güvenli Kodlama Standartları | [`bms_fsm.cpp`](./03_BMS_Yazilim_Mimarisi/bms_fsm.cpp): C++11 standartlarında, DTC loglama ve hata debounce filtreli deterministik FSM; PRECHARGE, BALANCING, kontaktör yapışma testi ve NvM freeze-frame içerir. |
+| **[Modül 4](./04_Tahmin_Algoritmalari)** | Kestirim Algoritmaları | Coulomb Counting Drift Analizi, 2D Extended Kalman Filter (EKF) Matematiksel Adımları, RLS ile SoH & SoP | [`ekf_soc_estimator.py`](./04_Tahmin_Algoritmalari/ekf_soc_estimator.py): NumPy matris işlemleri ve Jacobian türevleriyle gürültü filtreleyen EKF SoC takipçisi.<br>[`rls_soh_sop_estimator.py`](./04_Tahmin_Algoritmalari/rls_soh_sop_estimator.py): RLS ile R0 kestirimi, SoH ve çok kısıtlı SoP. |
 | **[Modül 5](./05_Guvenlik_ve_Termal_Yonetim)** | Fonksiyonel Güvenlik & Termal | ISO 26262 ASIL-D HARA Analizi, Termal Kaçak (Thermal Runaway) Aşamaları, Steinhart-Hart NTC Modelleme | [`thermal_pid_control.py`](./05_Guvenlik_ve_Termal_Yonetim/thermal_pid_control.py): Hücre Joule ısınmasını aktif PID kontrolcü ile soğutan termal denge simülasyonu. |
 | **[Modül 6](./06_Endustriyel_Protokoller_ve_Test)** | Endüstriyel Protokoller & HIL | CAN 2.0B / CAN-FD, DBC Mesaj Paketleme & Sinyal Çözümleme, UDS (ISO 14229), HIL Test ve FIU Altyapısı | [`bms_can_simulator.py`](./06_Endustriyel_Protokoller_ve_Test/bms_can_simulator.py): 8-byte raw CAN paketlerini bit seviyesinde kodlayan (encode) ve çözen (decode) simülasyon. |
 
@@ -77,14 +77,17 @@ Tüm simülasyonları ve analiz araçlarını yerel bilgisayarınızda çalışt
    *   **Modül 1 - Hücre Simülasyonu:**
        ```bash
        python 01_Hucre_Modelleme_ve_Karakterizasyon/cell_model_1RC.py
+        python 01_Hucre_Modelleme_ve_Karakterizasyon/cell_model_2RC_hysteresis.py
        ```
    *   **Modül 2 - Ön Şarj Analizi:**
        ```bash
        python 02_Guc_Elektronigi_ve_Donanim/precharge_simulation.py
+        python 02_Guc_Elektronigi_ve_Donanim/cell_balancing_simulation.py
        ```
    *   **Modül 4 - Kalman Filtresi SoC Tahmini:**
        ```bash
        python 04_Tahmin_Algoritmalari/ekf_soc_estimator.py
+        python 04_Tahmin_Algoritmalari/rls_soh_sop_estimator.py
        ```
    *   **Modül 5 - Termal PID Kontrolü:**
        ```bash
@@ -95,6 +98,15 @@ Tüm simülasyonları ve analiz araçlarını yerel bilgisayarınızda çalışt
        python 06_Endustriyel_Protokoller_ve_Test/bms_can_simulator.py
        ```
 
+
+### 5. 2-RC + Histerezis, HPPC ve Arrhenius Etkisi (Modül 1)
+![HPPC](assets/hppc_2rc_hysteresis.png)
+
+### 6. Pasif vs Aktif Dengeleme (Modül 2)
+![Dengeleme](assets/cell_balancing_comparison.png)
+
+### 7. RLS ile SoH ve SoP Kestirimi (Modül 4)
+![RLS](assets/rls_soh_sop_estimation.png)
 
 ---
 

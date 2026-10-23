@@ -47,57 +47,70 @@ graph TD
 
 ## 🔄 2. Sonlu Durum Makinesi (Finite State Machine - FSM)
 
-BMS, sistemin o anki durumuna (State) göre kararlar veren bir FSM mimarisi üzerine kurulur. Durumlar arası geçişler, hata durumlarında en hızlı şekilde güvenli duruma (Safe State) geçecek şekilde kurgulanır.
+BMS, sistemin o anki durumuna (State) göre kararlar veren deterministik bir FSM mimarisi üzerine kurulur. Durumlar arası geçişler, hata durumlarında en hızlı şekilde güvenli duruma (**Safe State - FAULT**) geçecek şekilde kurgulanır.
+
+```mermaid
+stateDiagram-v2
+    [*] --> INIT
+    INIT --> STANDBY : POST & Kontaktör Yapışma Testi OK
+    INIT --> FAULT : Kontaktör Yapışma Hatası (V_link > 40V)
+    STANDBY --> BALANCING : Hücre ΔV > 15 mV (Dinlenme)
+    BALANCING --> STANDBY : Hücre ΔV <= 5 mV
+    STANDBY --> PRECHARGE : Sürüş / Şarj Talebi (MAIN- & PRE+ ON)
+    PRECHARGE --> DISCHARGE : V_link >= 0.95 * V_pack (I > 0)
+    PRECHARGE --> CHARGE : V_link >= 0.95 * V_pack (I < 0)
+    PRECHARGE --> FAULT : Pre-charge Timeout (> 300 ms)
+    DISCHARGE --> STANDBY : Akım Kesildi (|I| < 0.2 A)
+    CHARGE --> STANDBY : Şarj Tamamlandı (|I| < 0.2 A)
+    STANDBY --> FAULT : ASIL-D Kritik Hata (Debounce >= 3)
+    DISCHARGE --> FAULT : OV / UV / OT / OC / İzolasyon Hatası
+    CHARGE --> FAULT : OV / UV / OT / OC / İzolasyon Hatası
+    FAULT --> INIT : UDS 0x14 ClearDiagnosticInformation
+```
 
 | Mevcut Durum | Tetikleyici Koşul (Event) | Hedef Durum | Gerçekleşen Eylem / İşlem |
 | :--- | :--- | :--- | :--- |
-| **INIT** | Güç açılması, Self-Test Başarılı | **STANDBY** | Donanım (AFE, Sensörler) kurulur, kontaktörler açık tutulur. |
-| **STANDBY** | Akım algılandı (Deşarj) | **DISCHARGE** | Ana Negatif ve Pozitif kontaktörler kapatılır. |
-| **STANDBY** | Şarj fişi takıldı (Akım < 0) | **CHARGE** | Şarj kontaktörleri / Şarj profili etkinleştirilir. |
-| **CHARGE** | Hücre voltajı $\ge V_{max}$ veya Şarj Bitti | **STANDBY** | Şarj kontaktörü açılır, şarj sonlandırılır. |
-| **ANY STATE** | Kritik Hata (Over-Voltage, Over-Temp, Over-Current) | **FAULT** | **CRITICAL:** Kontaktörler milisaniyeler içinde açılarak batarya izole edilir. Hata kodu (DTC) kalıcı hafızaya yazılır. |
-| **FAULT** | UDS Üzerinden Reset / Hata Temizleme | **INIT** | Hatalar silinir, sistem yeniden başlatılır. |
+| **INIT** | Güç açılması, Self-Test & Kontaktör Yapışma Testi Başarılı | **STANDBY** | Donanım (AFE, Sensörler) kurulur, $V_{\text{link}} < 40\text{ V}$ doğrulanır, kontaktörler açık tutulur. |
+| **STANDBY** | Sürüş veya Şarj Talebi | **PRECHARGE** | `MAIN-` ve `PRE+` kontaktörleri kapatılarak DC-Link kapasitörü sınırlı akımla doldurulur. |
+| **PRECHARGE** | $V_{\text{link}} \ge 0.95 \cdot V_{\text{pack}}$ ($t < 300\text{ ms}$) | **DISCHARGE / CHARGE** | `MAIN+` kapatılır, `PRE+` açılır, yüksek güç akışı başlar. |
+| **STANDBY** | Hücreler arası gerilim farkı $\Delta V > 15\text{ mV}$ | **BALANCING** | AFE pasif şönt MOSFET'leri veya aktif dengeleme devresi çalıştırılır. |
+| **ANY STATE** | Kritik Hata (`OV`, `UV`, `OT`, `OC`, `ISO_FAULT`, `WELD`) | **FAULT** | **CRITICAL:** Tüm kontaktörler derhal açılarak batarya izole edilir. NvM belleğe **Freeze-Frame** kaydedilir. |
+| **FAULT** | UDS `0x14` Üzerinden Hata Temizleme | **INIT** | Hata sayaçları sıfırlanır, sistem yeniden öz-test (POST) sürecine girer. |
 
 ---
 
 ## ⏱ 3. Real-Time Görev (Task) Yönetimi ve Determinizm
 
-BMS gömülü yazılımının zamanlaması, en kötü durum senaryolarında bile deterministik (tahmin edilebilir zaman sınırları içinde) olmak zorundadır. Bu nedenle RTOS üzerinde farklı önceliklerde periyodik görevler tanımlanır:
+BMS gömülü yazılımının zamanlaması, en kötü durum çalışma süresi (**WCET - Worst-Case Execution Time**) sınırları içinde deterministik olmak zorundadır. RTOS üzerinde Rate-Monotonic Scheduling (RMS) prensibiyle farklı önceliklerde periyodik görevler koşturulur:
 
 ```mermaid
-gantt
-    title BMS RTOS Görev Dağılımı ve Zamanlaması
-    dateFormat  SS
-    axisFormat %L ms
-
-    section 1ms Task
-    Aşırı Akım ve Kısa Devre Koruması (Kesme Tabanlı) :active, 00, 01
-    section 10ms Task
-    Hücre Gerilimleri ve Paket Akımı Okuma (ADC/SPI) :crit, 00, 10
-    section 100ms Task
-    EKF SoC Tahmini & Termal Kontrol (PID) : 00, 50
-    section 1000ms Task
-    Pasif Dengeleme Kararı & Diagnostik Loglama : 00, 99
+flowchart LR
+    IRQ["Donanım Kesmesi (ISR < 50 µs)<br/>Kısa Devre & Donanımsal Aşırı Akım"] --> T1["1 ms Görevi (En Yüksek Öncelik)<br/>Kontaktör Sürücü & Güvenlik G/Ç"]
+    T1 --> T10["10 ms Görevi (Yüksek Öncelik)<br/>AFE isoSPI Voltaj/Sıcaklık Okuma & Debounce"]
+    T10 --> T100["100 ms Görevi (Orta Öncelik)<br/>EKF SoC, RLS SoH/SoP, Termal PID & CAN Tx"]
+    T100 --> T1000["1000 ms Görevi (Düşük Öncelik)<br/>Hücre Dengeleme, IMD & NvM Freeze-Frame"]
 ```
 
-1.  **1 ms Task (Kritik Öncelik):** Donanım kesmesi (Interrupt) tabanlıdır. Kısa devre veya aşırı akım durumunda mikro saniyeler içinde kontaktörleri açma sinyalini tetikler.
-2.  **10 ms Task (Yüksek Öncelik):** AFE üzerindeki hücre voltajları ve sıcaklıkları SPI üzerinden okunur. Debounce (hata doğrulama) filtreleri koşturulur.
-3.  **100 ms Task (Orta Öncelik):** Extended Kalman Filtresi çalıştırılarak SoC güncellenir. Termal PID algoritması fan hızını belirler.
-4.  **1000 ms Task (Düşük Öncelik):** Hücrelerin dengeleme kararları verilir, UDS üzerinden teşhis mesajları (DTC) güncellenir ve EEPROM kalıcı hafızasına kaydedilir.
+| Görev Periyodu | RTOS Önceliği | WCET Bütçesi | Sorumlu Olduğu Kritik Fonksiyonlar |
+| :--- | :--- | :--- | :--- |
+| **ISR (Kesme)** | Donanım Seviyesi | $< 50\ \mu\text{s}$ | Analog karşılaştırıcı (Comparator) tabanlı donanımsal kısa devre ($I > 500\text{ A}$) kesmesi. |
+| **1 ms Task** | Çok Yüksek (`Prio 4`) | $< 250\ \mu\text{s}$ | Kontaktör bobin PWM kontrolü, Watchdog (`WdgM`) alive-counter beslemesi. |
+| **10 ms Task** | Yüksek (`Prio 3`) | $< 2.5\text{ ms}$ | AFE isoSPI papatya zinciri üzerinden tüm hücre gerilim/sıcaklıklarının okunması, CRC doğrulaması ve **Asimetrik Yukarı/Aşağı Debounce** filtreleri. |
+| **100 ms Task** | Orta (`Prio 2`) | $< 18.0\text{ ms}$ | **Extended Kalman Filter (EKF)** SoC tahmini, **RLS** iç direnç takibi, **SoP** güç limitleri, Termal PID ve `0x351` CAN mesaj yayını. |
+| **1000 ms Task** | Düşük (`Prio 1`) | $< 80.0\text{ ms}$ | Pasif/Aktif balans kararları, UDS (`ISO 14229`) teşhis istekleri ve EEPROM/Flash **NvM Freeze-Frame** kayıtları. |
 
 ---
 
-## 🛡 4. MISRA C++:2008 ve Gömülü Yazılım Güvenliği
+## 🛡 4. MISRA C++:2008, Kontaktör Yapışma Testi ve NvM Freeze-Frame
 
-BMS gibi güvenlik kritik otomotiv yazılımlarında hataları minimuma indirmek amacıyla **MISRA C:2012** ve **MISRA C++:2008** standartlarına uyulması zorunludur:
+BMS gibi **ASIL-D** güvenlik kritik otomotiv yazılımlarında **MISRA C:2012** ve **MISRA C++:2008** standartlarına uyulması zorunludur:
 
-*   **Dinamik Bellek Yönetimi Yasaktır:** `malloc`, `free`, `new` ve `delete` kullanımı kesinlikle yasaktır. Dinamik bellek yönetimi, bellek bölünmesine (fragmentation) ve çalışma zamanında bellek yetersizliği çökmelerine neden olabilir.
-*   **Pointer Aritmetiği Kısıtlaması:** Göstericiler (pointers) üzerinde `ptr++` veya `ptr + 5` gibi aritmetik işlemler yapılamaz. Bunun yerine dizi indeksleri tercih edilmelidir.
-*   **Exception Handling Yasaktır:** `try-catch` blokları, çalışma zamanı yükü (overhead) getirdiği ve determinizmi bozduğu için kullanılmaz. Hata yönetimleri dönüş kodları (`enum class Result`) ile yapılır.
-*   **Sonsuz Döngü Koruması:** Tüm `while` ve `for` döngülerinin maksimum iterasyon sınırları olmak zorundadır. Asla ucu açık döngü bırakılmaz.
+*   **Dinamik Bellek Yönetimi Yasaktır:** `malloc`, `free`, `new` ve `delete` kullanımı kesinlikle yasaktır. Tüm veri yapıları (örn. `std::array<FreezeFrame, 8>`) derleme zamanında statik olarak tahsis edilir.
+*   **Kontaktör Yapışma Tespiti (Contactor Weld Check):** Sistem `INIT` aşamasındayken ve kontaktörlere "AÇIK" komutu veriliyorken inverter tarafındaki $V_{\text{link}}$ gerilimi ölçülür. Eğer $V_{\text{link}} > 40\text{ V}$ ise kontaktör kontaklarının ark nedeniyle birbirine kaynadığı (`DTC 0x9005 - CONTACTOR_WELD_FAULT`) tespit edilir ve sürüş engellenir.
+*   **NvM Freeze-Frame Kaydı:** Bir hata oluştuğu anda sadece hata kodu (DTC) değil; hatanın gerçekleştiği milisaniye zaman damgası, hücre gerilimi, paket akımı, sıcaklık ve izolasyon direnci kalıcı belleğe (Non-Volatile Memory) anlık görüntü (**Freeze-Frame**) olarak kaydedilir.
 
 ---
 
 ## 💻 Uygulama ve Simülasyon
 
-*   [bms_fsm.cpp](./bms_fsm.cpp): C++11 standartlarına uygun, alarm filtrelemeli, durum desenine sahip ve teşhis hata kodu (DTC) destekli profesyonel FSM simülasyonu.
+*   [bms_fsm.cpp](./bms_fsm.cpp): MISRA C++ ilkelerine uygun (dinamik bellek ve exception içermeyen), `PRECHARGE`, `BALANCING`, **Kontaktör Yapışma Testi**, **Asimetrik Debounce** ve **NvM Freeze-Frame** özelliklerine sahip deterministik BMS FSM simülasyonu.

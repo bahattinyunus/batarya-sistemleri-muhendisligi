@@ -75,15 +75,48 @@ graph TD
     C --> C1["Voc = K0 + K1*SoC + K2/SoC + K3*ln(SoC) + K4*ln(1-SoC)"]
 ```
 
-### OCV Histerezisi (Hysteresis Effect)
-Aynı SoC değerinde, hücrenin şarj edildikten sonraki durağan voltajı ($Voc_{charge}$), deşarj edildikten sonraki durağan voltajından ($Voc_{discharge}$) her zaman bir miktar yüksektir. Bu farka **histerezis** denir ve nikel tabanlı kimyalarda (NMC) az iken, LFP kimyalarında çok belirgindir. Hassas SoC tahmini için histerezis modeli de sisteme dahil edilmelidir.
+### OCV Histerezisi (Plett One-State Hysteresis Model)
+Aynı SoC değerinde, hücrenin şarj edildikten sonraki durağan voltajı ($V_{oc,\text{charge}}$), deşarj edildikten sonraki durağan voltajından ($V_{oc,\text{discharge}}$) her zaman bir miktar yüksektir. Bu farka **histerezis** denir ve nikel tabanlı kimyalarda (NMC) az iken, LFP kimyalarında ($\pm 15\text{ mV} - 25\text{ mV}$) çok belirgindir.
+
+Gregory Plett tarafından formüle edilen **Tek-Durumlu Histerezis (One-State Hysteresis)** diferansiyel denklemi:
+
+$$\frac{dh(t)}{dt} = -\left|\frac{\gamma \cdot \eta \cdot I(t)}{3600 \cdot Q_n}\right| \left(h(t) + \text{sgn}(I(t))\right)$$
+
+Ayrık zaman (Zero-Order Hold - ZOH) çözümü ($I > 0$ deşarj yönü kabulüyle):
+$$h_{k+1} = \exp\left(-\left|\frac{\gamma I_k \Delta t}{3600 Q_n}\right|\right) h_k - \left[1 - \exp\left(-\left|\frac{\gamma I_k \Delta t}{3600 Q_n}\right|\right)\right] \text{sgn}(I_k)$$
+
+$$V_t(k) = V_{oc}(SoC_k) + M(SoC_k) \cdot h_k - I_k R_0(T, SoC) - V_{rc1, k} - V_{rc2, k}$$
+
+---
+
+## 🌡 4. Arrhenius Yasası ve Sıcaklık-Bağımlı İç Direnç Modellemesi
+
+Batarya hücrelerinin ohmik ($R_0$) ve polarizasyon ($R_1, R_2$) dirençleri ortam sıcaklığı düştükçe elektrolit iyonik iletkenliğinin azalması nedeniyle üstel olarak artar. Bu fiziksel davranış **Arrhenius Denklemi** ile modellenir:
+
+$$R(T) = R_{\text{ref}} \cdot \exp\left[\frac{E_a}{R_{\text{gas}}} \left(\frac{1}{T} - \frac{1}{T_{\text{ref}}}\right)\right]$$
+
+*   $T$: Mutlak hücre sıcaklığı ($\text{K}$), $T_{\text{ref}} = 298.15\text{ K}$ ($25^\circ\text{C}$)
+*   $E_a$: Aktivasyon enerjisi ($\approx 20\,000 - 35\,000\text{ J/mol}$)
+*   $R_{\text{gas}} = 8.314\text{ J/(mol}\cdot\text{K)}$: Evrensel gaz sabiti
+
+---
+
+## 🧪 5. HPPC (Hybrid Pulse Power Characterization) Parametre Çıkarımı
+
+Eşdeğer devre parametreleri ($R_0, R_1, C_1, R_2, C_2$) laboratuvarda farklı SoC ve sıcaklık noktalarında uygulanan **HPPC darbe testleri** ile belirlenir:
+
+1.  **Anlık Gerilim Çökmesi ($\Delta t \to 0^+$):** Akım darbesi uygulandığı ilk milisaniyede kapasitörler kısa devre gibi davranır; ani gerilim düşümü doğrudan ohmik direnci verir:
+    $$R_0 = \frac{|V_t(t_0^-) - V_t(t_0^+)|}{|I_{\text{pulse}}|}$$
+2.  **Gevşeme (Relaxation) Eğrisi Sığdırma ($I = 0$):** Akım kesildikten sonraki dinlenme fazında terminal geriliminin $V_{oc}$'ye dönüş eğrisi çift üstel (bi-exponential) En Küçük Kareler (Non-linear Least Squares) yöntemiyle fit edilerek $\tau_1 = R_1 C_1$ ve $\tau_2 = R_2 C_2$ zaman sabitleri ayrıştırılır:
+    $$V_t(t) - V_{oc} = -V_{rc1}(0) e^{-t/\tau_1} - V_{rc2}(0) e^{-t/\tau_2}$$
 
 ---
 
 ## 💻 Uygulama ve Simülasyon
 
 Modül klasöründeki kodları inceleyerek teorik modellerin Python simülasyonlarını çalıştırabilirsiniz:
-*   [cell_model_1RC.py](./cell_model_1RC.py): Gerçekçi OCV polinomu ve dinamik deşarj döngüsüyle hücre voltaj tepkisini veren 1-RC simülasyonu.
+*   [cell_model_1RC.py](./cell_model_1RC.py): Gerçekçi 6. derece NMC OCV polinomu ve dinamik deşarj döngüsüyle (DST) hücre voltaj tepkisini veren 1-RC simülasyonu.
+*   [cell_model_2RC_hysteresis.py](./cell_model_2RC_hysteresis.py): LFP düz platolu OCV eğrisi, Plett histerezis zarflaması, Arrhenius sıcaklık bağımlılığı ($25^\circ\text{C}$ vs $0^\circ\text{C}$) ve 2-RC (hızlı yük transferi + yavaş difüzyon) HPPC darbe cevabı simülasyonu.
 
 ---
 

@@ -128,4 +128,8 @@ Geleneksel batarya yönetim sistemlerinin araç üzerindeki işlem gücü sını
 ## 💻 Uygulama ve Simülasyon
 
 *   [ekf_soc_estimator.py](./ekf_soc_estimator.py): NumPy matris matematiğiyle yazılmış, gerçek voltaj gürültüsünü filtreleyerek SoC'yi hassas bir şekilde takip eden EKF Python simülasyonu.
+*   [rls_soh_sop_estimator.py](./rls_soh_sop_estimator.py): Unutma faktörlü **RLS** (ARX modeli) ile çevrimiçi $R_0, R_1, C_1$ kestirimi, direnç bazlı **SoH** takibi ve gerilim/SoC/donanım akım kısıtlarını birleştiren 10 saniyelik ufuklu **SoP** hesabı.
+
+![RLS SoH SoP](../assets/rls_soh_sop_estimation.png)
+
 

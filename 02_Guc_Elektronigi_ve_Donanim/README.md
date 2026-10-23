@@ -99,6 +99,20 @@ sequenceDiagram
 
 ---
 
+## 🛡 5. Yüksek Voltaj İzolasyon İzleme (IMD - ISO 6469-3 & UN ECE R100)
+
+Elektrikli araçlarda yüksek voltaj baraları ($\text{HV}+$, $\text{HV}-$), aracın $12\text{ V}$ düşük voltaj şasisinden (LV Chassis Ground) tamamen yalıtılmıştır (Floating HV System). Soğutma sıvısı sızıntısı, kablo izolasyon aşınması veya nem nedeniyle oluşan kaçak dirençler ($R_{iso+}$, $R_{iso-}$) **İzolasyon İzleme Cihazı (IMD)** tarafından sürekli denetlenir.
+
+$$\frac{1}{R_{iso,\text{eq}}} = \frac{1}{R_{iso+}} + \frac{1}{R_{iso-}} \implies R_{iso,\text{eq}} = \frac{R_{iso+} \cdot R_{iso-}}{R_{iso+} + R_{iso-}}$$
+
+**ISO 6469-3 ve UN ECE R100 Güvenlik Eşikleri:**
+*   **Sağlıklı Durum (Normal):** $R_{iso} \ge 500\ \Omega/\text{V}$ ($400\text{ V}$ bir paket için $\ge 200\text{ k}\Omega$)
+*   **Uyarı Eşiği (Warning / Servis Gerekli):** $100\ \Omega/\text{V} \le R_{iso} < 500\ \Omega/\text{V}$
+*   **Kritik İzolasyon Hatası (Emergency Shutdown):** $R_{iso} < 100\ \Omega/\text{V}$ ($400\text{ V}$ paket için $< 40\text{ k}\Omega$ — Kontaktörler derhal açılır!)
+
+---
+
 ## 💻 Uygulama ve Simülasyon
 
 *   [precharge_simulation.py](./precharge_simulation.py): Uygun pre-charge direnci ve süresini hesaplayan, kondansatör gerilim ve akım değişimlerini grafikleyen Python simülasyonu.
+*   [cell_balancing_simulation.py](./cell_balancing_simulation.py): 12S batarya modülünde **Pasif (Şönt Direnç)** ve **Aktif (İndüktif Buck-Boost)** dengeleme algoritmalarının yakınsama süresi, atık ısı (Wh) ve kullanılabilir paket kapasitesi açısından karşılaştırması ile **ISO 6469-3 IMD İzolasyon Testi** simülasyonu.
