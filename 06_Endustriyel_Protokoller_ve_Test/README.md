@@ -86,3 +86,5 @@ BMS, araç servis istasyonuna bağlandığında veya üretim hattında teşhis e
 ## 💻 Uygulama ve Simülasyon
 
 *   [bms_can_simulator.py](./bms_can_simulator.py): BMS'in akım, gerilim ve SoC sinyallerini Little Endian / Intel formatında 8-byte ham CAN paketlerine kodlayan ve çözen Python simülasyonu.
+*   [uds_diagnostic_simulator.py](./uds_diagnostic_simulator.py): ISO 14229 UDS teşhis protokolü (Session Control `0x10`, Security Access `0x27`, RDBI `0x22`, DTC yönetimi `0x19`/`0x14`, Routine Control `0x31` ve OTA yazılım indirme `0x34`/`0x36`/`0x37`) ile ISO 15765-2 (ISO-TP) Single/First/Consecutive çerçeveleme simülasyonu.
+*   [bms_can_database.dbc](./bms_can_database.dbc): Otomotiv endüstri standardı Vector CANoe/CANalyzer formatında hazırlanmış, BMS_Status (`0x351`), BMS_Limits (`0x352`), BMS_CellVoltages (`0x353`), BMS_Thermal (`0x354`) ve UDS fiziksel teşhis mesajlarını içeren komple DBC veritabanı.

@@ -1,0 +1,103 @@
+VERSION ""
+
+
+NS_ : 
+	NS_DESC_
+	CM_
+	BA_DEF_
+	BA_
+	VAL_
+	CAT_DEF_
+	CAT_
+	FILTER
+	BA_DEF_DEF_
+	EV_DATA_
+	ENVVAR_DATA_
+	SGTYPE_
+	SGTYPE_VAL_
+	BA_DEF_SGTYPE_
+	BA_SGTYPE_
+	SIG_TYPE_REF_
+	VAL_TABLE_
+	SIG_GROUP_
+	SIG_VALTYPE_
+	SIGTYPE_VALTYPE_
+	BO_TX_BU_
+	BA_DEF_REL_
+	BA_REL_
+	BA_DEF_DEF_REL_
+	BU_SG_REL_
+	BU_EV_REL_
+	BU_BO_REL_
+	SG_MUL_VAL_
+
+BS_:
+
+BU_: BMS VCU CHARGER TESTER
+
+BO_ 849 BMS_Status_0x351: 8 BMS
+ SG_ BMS_Pack_SoC : 0|16@1+ (0.1,0) [0|100] "%"  VCU,CHARGER
+ SG_ BMS_Pack_Voltage : 16|16@1+ (0.1,0) [0|1000] "V"  VCU,CHARGER
+ SG_ BMS_Pack_Current : 32|16@1- (0.1,0) [-3276.8|3276.7] "A"  VCU,CHARGER
+ SG_ BMS_State : 48|4@1+ (1,0) [0|15] ""  VCU
+ SG_ BMS_Contactor_Pos : 52|1@1+ (1,0) [0|1] ""  VCU
+ SG_ BMS_Contactor_Neg : 53|1@1+ (1,0) [0|1] ""  VCU
+ SG_ BMS_Contactor_Pre : 54|1@1+ (1,0) [0|1] ""  VCU
+ SG_ BMS_Warning_Flag : 55|1@1+ (1,0) [0|1] ""  VCU
+ SG_ BMS_Rolling_Counter : 56|4@1+ (1,0) [0|15] ""  VCU
+ SG_ BMS_Checksum_CRC8 : 60|4@1+ (1,0) [0|15] ""  VCU
+
+BO_ 850 BMS_Limits_0x352: 8 BMS
+ SG_ BMS_Max_Discharge_Current : 0|16@1+ (0.1,0) [0|1500] "A"  VCU
+ SG_ BMS_Max_Charge_Current : 16|16@1+ (0.1,0) [0|1000] "A"  VCU,CHARGER
+ SG_ BMS_Max_Discharge_Power_kW : 32|16@1+ (0.1,0) [0|500] "kW"  VCU
+ SG_ BMS_Max_Charge_Power_kW : 48|16@1+ (0.1,0) [0|350] "kW"  VCU,CHARGER
+
+BO_ 851 BMS_CellVoltages_0x353: 8 BMS
+ SG_ BMS_Cell_Max_Voltage : 0|16@1+ (0.001,0) [0|5] "V"  VCU
+ SG_ BMS_Cell_Min_Voltage : 16|16@1+ (0.001,0) [0|5] "V"  VCU
+ SG_ BMS_Cell_Max_V_ID : 32|8@1+ (1,1) [1|192] "ID"  VCU
+ SG_ BMS_Cell_Min_V_ID : 40|8@1+ (1,1) [1|192] "ID"  VCU
+ SG_ BMS_Cell_Delta_mV : 48|16@1+ (1,0) [0|1000] "mV"  VCU
+
+BO_ 852 BMS_Thermal_0x354: 8 BMS
+ SG_ BMS_Cell_Max_Temp : 0|8@1- (1,0) [-40|120] "degC"  VCU
+ SG_ BMS_Cell_Min_Temp : 8|8@1- (1,0) [-40|120] "degC"  VCU
+ SG_ BMS_Cell_Max_T_ID : 16|8@1+ (1,1) [1|64] "ID"  VCU
+ SG_ BMS_Cell_Min_T_ID : 24|8@1+ (1,1) [1|64] "ID"  VCU
+ SG_ BMS_Cooling_Duty_Pct : 32|8@1+ (1,0) [0|100] "%"  VCU
+ SG_ BMS_Isolation_Resistance : 40|16@1+ (1,0) [0|65535] "kOhm"  VCU
+ SG_ BMS_Isolation_Status : 56|2@1+ (1,0) [0|3] ""  VCU
+
+BO_ 2020 UDS_Diag_Req_0x7E4: 8 TESTER
+ SG_ UDS_Req_Payload : 0|64@1+ (1,0) [0|0] ""  BMS
+
+BO_ 2028 UDS_Diag_Resp_0x7EC: 8 BMS
+ SG_ UDS_Resp_Payload : 0|64@1+ (1,0) [0|0] ""  TESTER
+
+
+CM_ BO_ 849 "Main periodic BMS broadcast containing pack state, SOC, total voltage and current.";
+CM_ SG_ 849 BMS_Pack_SoC "Pack State of Charge computed via Extended Kalman Filter.";
+CM_ SG_ 849 BMS_State "0:INIT, 1:STANDBY, 2:PRECHARGE, 3:DISCHARGE, 4:CHARGE, 5:BALANCING, 6:FAULT";
+CM_ BO_ 850 "Dynamic State of Power (SoP) multi-constraint current and power limits.";
+CM_ BO_ 851 "Module-level individual cell extreme voltage monitor and imbalance delta.";
+CM_ BO_ 852 "Thermal pack diagnostics, cooling actuator request and ISO 6469-3 isolation monitor.";
+CM_ BO_ 2020 "ISO 14229 Unified Diagnostic Services physical client request to BMS ECU.";
+CM_ BO_ 2028 "ISO 14229 Unified Diagnostic Services server response from BMS ECU.";
+
+BA_DEF_ BO_  "GenMsgCycleTime" INT 0 10000;
+BA_DEF_ SG_  "GenSigStartValue" INT 0 65535;
+
+BA_DEF_DEF_  "GenMsgCycleTime" 100;
+BA_DEF_DEF_  "GenSigStartValue" 0;
+
+BA_ "GenMsgCycleTime" BO_ 849 100;
+BA_ "GenMsgCycleTime" BO_ 850 100;
+BA_ "GenMsgCycleTime" BO_ 851 200;
+BA_ "GenMsgCycleTime" BO_ 852 500;
+
+VAL_ 849 BMS_State 0 "INIT" 1 "STANDBY" 2 "PRECHARGE" 3 "DISCHARGE" 4 "CHARGE" 5 "BALANCING" 6 "FAULT" ;
+VAL_ 849 BMS_Contactor_Pos 0 "OPEN" 1 "CLOSED" ;
+VAL_ 849 BMS_Contactor_Neg 0 "OPEN" 1 "CLOSED" ;
+VAL_ 849 BMS_Contactor_Pre 0 "OPEN" 1 "CLOSED" ;
+VAL_ 852 BMS_Isolation_Status 0 "HEALTHY" 1 "WARNING" 2 "CRITICAL_FAULT" ;

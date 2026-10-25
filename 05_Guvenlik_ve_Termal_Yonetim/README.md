@@ -127,4 +127,9 @@ Modern otomotiv BMS tasarımlarında, online EIS devreleri yardımıyla araç se
 ## 💻 Uygulama ve Simülasyon
 
 *   [thermal_pid_control.py](./thermal_pid_control.py): Hücrelerin Joule ısınması ($I^2 R$) ve entropik ısı üretimini modelleyen, bu ısıyı aktif bir PID kontrolör yardımıyla soğutan yüksek sadakatli Python simülasyonu.
+*   [thermal_runaway_propagation.py](./thermal_runaway_propagation.py): 8 hücreli modülde tırnak batması / iç kısa devre tetiklemeli, SEI ve katot ekzotermik reaksiyonlarını (Arrhenius) modelleyen ve aktif sıvı soğutmanın zincirleme kaçak yayılımını nasıl engellediğini analiz eden simülasyon.
+*   [eis_nyquist_simulator.py](./eis_nyquist_simulator.py): Randles eşdeğer devresi ve Warburg difüzyonu ile $10\text{ mHz} - 100\text{ kHz}$ arası Nyquist ve Bode empedans spektrumu çıkaran, yeni hücre, yaşlanmış SEI ve soğuk hızlı şarj lityum dendriti anomalilerini karşılaştıran EIS simülasyonu.
+
+![EIS Spektrumu](../assets/eis_nyquist_bode.png)
+![Termal Kaçak Yayılımı](../assets/thermal_runaway_propagation.png)
 
